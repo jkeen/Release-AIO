@@ -12,6 +12,7 @@
   "main": "index.js",
   "devDependencies": {},
   "scripts": {
+    "build": "npx @vercel/ncc build src/main.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

@@ -63,7 +63,9 @@ async function Main() {
         }
 
         await Promise.all([DownloadPromise, CreatePromise, DecodePromise])
-            .then(() => UploadAssets())
+
+        await UpdateManifestPath();
+        await UploadAssets();
 
     } catch (error) {
         core.setFailed(error)
@@ -157,6 +159,41 @@ async function CreateRelease() {
     core.setOutput('html_url', htmlUrl)
     core.setOutput('upload_url', uploadUrl)
     core.info('CreateRelease Done')
+}
+
+async function UpdateManifestPath() {
+    core.info('UpdateManifestPath Start')
+
+    let latest
+    let filePath = path.join('.', 'asset_files', 'latest.json');
+    try {
+        latest = fs.readFileSync(filePath, "utf-8");
+    } catch (err) {
+        core.debug(err)
+        switch (err.code) {
+            case 'ENOENT':
+                core.info(latest + ' not exists')
+                break
+            default:
+                core.error(err)
+                break
+        }
+    }
+    const manifest = JSON.parse(latest);
+    core.info('Reading latest.json')
+
+    let oldPath, newPath;
+    Object.keys(manifest['platforms']).forEach((key) => {
+        oldPath = manifest['platforms'][key]['url'];
+        newPath = oldPath.replace(`github.com/${currentOwner}/${currentRepo}/`, `github.com/${owner}/${repo}/`);
+        core.info(`Updating ${key} url path from ${oldPath} to ${newPath}`);
+        manifest['platforms'][key]['url'] = newPath;
+    });
+    core.info(`Writing ${filePath} with updated paths`);
+
+    fs.writeFileSync(filePath, JSON.stringify(manifest, null, 2), 'utf-8');
+
+    core.info('UpdateManifestPath End')
 }
 
 async function DecodeAssetFile() {
