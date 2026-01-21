@@ -64,6 +64,15 @@ async function Main() {
 
         await Promise.all([DownloadPromise, CreatePromise, DecodePromise])
 
+        // Debug: List all asset files
+        let assetDirPath = path.join('.', 'asset_files');
+        try {
+            let files = fs.readdirSync(assetDirPath);
+            core.info(`Asset files found: ${files.join(', ')}`);
+        } catch (err) {
+            core.info(`Asset directory not found or empty: ${err.message}`);
+        }
+
         await UpdateManifestPath();
         await UploadAssets();
 
@@ -163,15 +172,6 @@ async function CreateRelease() {
 
 async function UpdateManifestPath() {
     core.info('UpdateManifestPath Start')
-
-    // Debug: List all asset files
-    let assetDirPath = path.join('.', 'asset_files');
-    try {
-        let files = fs.readdirSync(assetDirPath);
-        core.info(`Asset files found: ${files.join(', ')}`);
-    } catch (err) {
-        core.info(`Asset directory not found or empty: ${err.message}`);
-    }
 
     let latest
     let filePath = path.join('.', 'asset_files', 'latest.json');
