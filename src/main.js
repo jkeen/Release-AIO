@@ -164,6 +164,15 @@ async function CreateRelease() {
 async function UpdateManifestPath() {
     core.info('UpdateManifestPath Start')
 
+    // Debug: List all asset files
+    let assetDirPath = path.join('.', 'asset_files');
+    try {
+        let files = fs.readdirSync(assetDirPath);
+        core.info(`Asset files found: ${files.join(', ')}`);
+    } catch (err) {
+        core.info(`Asset directory not found or empty: ${err.message}`);
+    }
+
     let latest
     let filePath = path.join('.', 'asset_files', 'latest.json');
     try {
@@ -178,22 +187,31 @@ async function UpdateManifestPath() {
                 core.error(err)
                 break
         }
+        return
     }
-    const manifest = JSON.parse(latest);
-    core.info('Reading latest.json')
+    if (latest) {
+        var manifest;
+        try {
+            manifest = JSON.parse(latest);
+        } catch(e) {
+            core.info('Errored while trying to read latest.json')
+            return;
+        }
+        core.info('Reading latest.json')
 
-    let oldPath, newPath;
-    Object.keys(manifest['platforms']).forEach((key) => {
-        oldPath = manifest['platforms'][key]['url'];
-        newPath = oldPath.replace(`github.com/${currentOwner}/${currentRepo}/`, `github.com/${owner}/${repo}/`);
-        core.info(`Updating ${key} url path from ${oldPath} to ${newPath}`);
-        manifest['platforms'][key]['url'] = newPath;
-    });
-    core.info(`Writing ${filePath} with updated paths`);
+        let oldPath, newPath;
+        Object.keys(manifest['platforms']).forEach((key) => {
+            oldPath = manifest['platforms'][key]['url'];
+            newPath = oldPath.replace(`github.com/${currentOwner}/${currentRepo}/`, `github.com/${owner}/${repo}/`);
+            core.info(`Updating ${key} url path from ${oldPath} to ${newPath}`);
+            manifest['platforms'][key]['url'] = newPath;
+        });
+        core.info(`Writing ${filePath} with updated paths`);
 
-    fs.writeFileSync(filePath, JSON.stringify(manifest, null, 2), 'utf-8');
+        fs.writeFileSync(filePath, JSON.stringify(manifest, null, 2), 'utf-8');
 
-    core.info('UpdateManifestPath End')
+        core.info('UpdateManifestPath End')
+    }
 }
 
 async function DecodeAssetFile() {
